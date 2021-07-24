@@ -1,2 +1,1 @@
 # class CustomSelect
-## Training project

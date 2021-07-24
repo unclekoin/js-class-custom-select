@@ -12,6 +12,7 @@ const options = [
 class CustomSelect {
   #id;
   #options;
+  #select;
   #cls;
   #currentSelectedOption;
 
@@ -20,6 +21,10 @@ class CustomSelect {
     this.#options = options;
     this.#cls = 'select-dropdown';
     this.#currentSelectedOption = '';
+    this.#select = this.#createElement({
+      tag: 'div',
+      cls: this.#getClasses(),
+    });
   }
 
   #createElement(props) {
@@ -45,11 +50,6 @@ class CustomSelect {
   }
 
   #createSelect() {
-    const select = this.#createElement({
-      tag: 'div',
-      cls: this.#getClasses(),
-    });
-
     const button = this.#createElement({
       tag: 'button',
       cls: this.#getClasses('button'),
@@ -60,13 +60,13 @@ class CustomSelect {
       text: 'Select an item...',
     });
     button.append(buttonText);
-    select.append(button);
+    this.#select.append(button);
 
     const list = this.#createElement({
       tag: 'ul',
       cls: this.#getClasses('list'),
     });
-    select.append(list);
+    this.#select.append(list);
 
     this.#options.forEach((item) => {
       list.append(
@@ -79,49 +79,57 @@ class CustomSelect {
       );
     });
 
-    return select;
+    return this.#select;
   }
 
   #openSelect() {
-    const button = document.querySelector('.select-dropdown__button');
-    const list = document.querySelector('.select-dropdown__list');
+    const button = this.#select.querySelector('.select-dropdown__button');
+    const list = this.#select.querySelector('.select-dropdown__list');
 
     button.addEventListener('click', () => {
       list.classList.add('active');
     });
   }
 
+  #closeSelect() {
+    this.#select
+      .querySelector('.select-dropdown__list')
+      .classList.remove('active');
+  }
+
+  #selectItemHandler = (event) => {
+    const span = this.#select.querySelector('span.select-dropdown');
+    const { target } = event;
+
+    if (target.closest('.select-dropdown__list-item')) {
+      this.#select
+        .querySelectorAll('.select-dropdown__list-item')
+        .forEach((item) => item.classList.remove('selected'));
+
+      target.classList.add('selected');
+      this.#currentSelectedOption = target.dataset.value;
+      span.textContent = `${target.dataset.value}. ${target.textContent}`;
+      this.#closeSelect();
+      console.log(this.#selectedValue);
+    }
+  };
+
   #selectItem() {
-    const list = document.querySelector('.select-dropdown__list');
-    const span = document.querySelector('span.select-dropdown');
-
-    list.addEventListener('click', (event) => {
-      const { target } = event;
-
-      if (target.closest('.select-dropdown__list-item')) {
-        document
-          .querySelectorAll('.select-dropdown__list-item')
-          .forEach((item) => item.classList.remove('selected'));
-
-        target.classList.add('selected');
-        this.#currentSelectedOption = target.dataset.value;
-        span.textContent = `${target.dataset.value}. ${target.textContent}`;
-        list.classList.remove('active');
-        console.log(this.#selectedValue);
-      }
-    });
+    this.#select
+      .querySelector('.select-dropdown__list')
+      .addEventListener('click', this.#selectItemHandler);
   }
 
   get #selectedValue() {
-    return this.#options
-      .filter((item) => String(item.value) === this.#currentSelectedOption);
+    return this.#options.filter(
+      (item) => String(item.value) === this.#currentSelectedOption
+    );
   }
 
   render(container) {
     container.append(this.#createSelect());
     this.#openSelect();
     this.#selectItem();
-    return this;
   }
 }
 
